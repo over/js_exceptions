@@ -1,6 +1,7 @@
 //= require <jquery>
 (function() {
   window.ExceptionNotifier = {};
+
   $.extend(ExceptionNotifier, {
     notify: function (e) {
       if ( typeof(ExceptionNotifierOptions) !== 'undefined' && (typeof(ExceptionNotifierOptions.logErrors) !== 'undefined') && !ExceptionNotifierOptions.logErrors ) { return; }

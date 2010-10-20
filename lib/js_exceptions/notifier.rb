@@ -9,23 +9,17 @@ module JsExceptions
     @@email_prefix = "[ERROR] "
     cattr_accessor :email_prefix
   
-    self.template_root = "#{File.dirname(__FILE__)}/../views"
-  
     def self.reloadable?() false end
   
-    def exception_notification request, exception, data = {}
-      content_type "text/plain"
+    def exception_notification(request, exception, data = {})
+      @request = request
+      @backtrace = sanitize_backtrace(exception["content"])
+      @remote_ip = request.ip
+      @exception = exception
       
-      subject    "#{email_prefix.strip} #{exception["message"].strip}"
-  
-      recipients exception_recipients
-      from       sender_address
-  
-      body       data.merge({ 
-                    :exception => exception, :host => (request.env["HTTP_X_FORWARDED_HOST"] || request.env["HTTP_HOST"]),
-                    :backtrace => exception["content"], :remote_ip => request.ip,
-                    :rails_root => rails_root, :data => data,
-                 })
+      mail(:to => exception_recipients, :from => sender_address, :subject => subject) do |format|
+        format.text { render "#{File.dirname(__FILE__)}/views/exception_notification_text" }
+      end
     end
   
     private
@@ -36,8 +30,8 @@ module JsExceptions
       end
   
       def rails_root
-        @rails_root ||= Pathname.new(RAILS_ROOT).cleanpath.to_s
+        @rails_root ||= Pathname.new(Rails.root).cleanpath.to_s
       end
-  
+
   end
 end
